@@ -19,7 +19,7 @@ successfully put object to s3://mybucketname/mys3path/year=2018/month=02/day=20/
 ## Dummy data format
 now only supported for CSV file format
 ### Columns
-$name,$email,$ipAddress,$phoneNumber,$company,$rat,$let,$createdAt,$timestamp,$expired
+$name,$email,$ipAddress,$phoneNumber,$company,$lat,$lng,$createdAt,$timestamp,$expired
 ### Example
 ```
 $ head ./20180224.txt                                                                                                         

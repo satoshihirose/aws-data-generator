@@ -119,10 +119,10 @@ class KinesisActor extends Actor {
 
 }
 
-case class SampleUserData(name: String, email: String, ipAddress: String, phoneNumber: String, company: String, rat: Double, let: Double, createdAt: String, timestamp: Long, expired: Boolean) {
+case class SampleUserData(name: String, email: String, ipAddress: String, phoneNumber: String, company: String, lat: Double, lng: Double, createdAt: String, timestamp: Long, expired: Boolean) {
 
   // TODO: file formats selection? CSV? JSON? Parquet? ORC? ION?
-  def toCSV = s"$name,$email,$ipAddress,$phoneNumber,$company,$rat,$let,$createdAt,$timestamp,$expired"
+  def toCSV = s"$name,$email,$ipAddress,$phoneNumber,$company,$lat,$lng,$createdAt,$timestamp,$expired"
 
 }
 
