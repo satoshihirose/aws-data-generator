@@ -1,6 +1,8 @@
 # aws-data-generator
 a tool generates dummy data on AWS resources
 ## Setup
+only Java +1.8 supported
+
 download and build
 ```
 $ sbt assembly
@@ -16,6 +18,7 @@ successfully put object to s3://mybucketname/mys3path/year=2018/month=02/day=21/
 successfully put object to s3://mybucketname/mys3path/year=2018/month=02/day=20/20180220.txt
 ...
 ```
+You can move it anywhere in your PATH.
 ## Dummy data format
 now only supported for CSV file format
 ### Columns
