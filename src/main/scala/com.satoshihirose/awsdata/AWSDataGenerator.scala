@@ -29,6 +29,8 @@ object AWSDataGenerator extends App {
           c.copy(bucketName = x) ).text("s3 bucket name"),
         arg[String]("path").action( (x, c) =>
           c.copy(path = x) ).text("s3 key name"),
+        opt[String]("file-format").abbr("f").action( (x, c) =>
+          c.copy(fileFormat = x) ).text("type of file format, supported formats are csv, json"),
         opt[Int]("number-of-files").abbr("n").action( (x, c) =>
           c.copy(numberOfFiles = x) ).text("number of files"),
         opt[Unit]("partitioning").abbr("p").action( (x, c) =>
@@ -62,7 +64,7 @@ object AWSDataGenerator extends App {
 
 }
 
-case class Config(service: String = "", bucketName: String = "", path: String = "", numberOfFiles: Int = 10, partitioning: Boolean = false)
+case class Config(service: String = "", bucketName: String = "", path: String = "", fileFormat: String = "csv", numberOfFiles: Int = 10, partitioning: Boolean = false)
 
 class S3Actor extends Actor {
 
@@ -72,14 +74,18 @@ class S3Actor extends Actor {
       val s3 = AmazonS3ClientBuilder.defaultClient()
       // TODO: what kind of data template? sample, elb logs like, cf logs like?
       (0 until config.numberOfFiles).foreach(i => {
-        val usersStr = (0 until 100).map(_ => SampleUserData.random().toCSV).mkString("\n")
+        val usersStr = if (config.fileFormat == "json") {
+          (0 until 100).map(_ => SampleUserData.random().toJSON).mkString("\n")
+        } else {
+          (0 until 100).map(_ => SampleUserData.random().toCSV).mkString("\n")
+        }
         val contentLength = IOUtils.toByteArray(strToInputStream(usersStr)).length
         val metadata = new ObjectMetadata()
         metadata.setContentLength(contentLength)
 
         val date = LocalDate.now().minusDays(i)
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val objectName = date.format(formatter) + ".txt"
+        val objectName = date.format(formatter) + "." + config.fileFormat
 
         try {
           if (config.partitioning) {
@@ -123,6 +129,9 @@ case class SampleUserData(name: String, email: String, ipAddress: String, phoneN
 
   // TODO: file formats selection? CSV? JSON? Parquet? ORC? ION?
   def toCSV = s"$name,$email,$ipAddress,$phoneNumber,$company,$lat,$lng,$createdAt,$timestamp,$expired"
+
+  def toJSON = s"""{"name":"$name","email":"$email","ip_address":"$ipAddress","phone_number":"$phoneNumber","company":"$company",""" +
+    s""""coords":{"lat":$lat,"lng":$lng},"created_at":"$createdAt","timestamp":$timestamp,"expired":$expired}"""
 
 }
 
