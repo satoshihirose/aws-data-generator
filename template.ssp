@@ -1,0 +1,12 @@
+#{
+val alpha = fabricator.Alphanumeric()
+val calendar = fabricator.Calendar()
+val contact = fabricator.Contact()
+val finance = fabricator.Finance()
+val internet = fabricator.Internet()
+val userAgent = fabricator.UserAgent()
+val location = fabricator.Location()
+val mobile = fabricator.Mobile()
+val words = fabricator.Words()
+}#
+${alpha.randomInt},${alpha.randomBoolean},"${contact.address}"

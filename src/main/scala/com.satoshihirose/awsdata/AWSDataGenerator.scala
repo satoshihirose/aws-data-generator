@@ -12,6 +12,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
 import org.apache.commons.codec.Charsets
+import org.fusesource.scalate.TemplateEngine
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -31,6 +32,8 @@ object AWSDataGenerator extends App {
           c.copy(path = x) ).text("s3 key name"),
         opt[String]("file-format").abbr("f").action( (x, c) =>
           c.copy(fileFormat = x) ).text("type of file format, supported formats are csv, json"),
+        opt[String]("input-file").abbr("i").action( (x, c) =>
+          c.copy(inputFile = x) ).text("input template file path"),
         opt[Int]("number-of-files").abbr("n").action( (x, c) =>
           c.copy(numberOfFiles = x) ).text("number of files"),
         opt[Unit]("partitioning").abbr("p").action( (x, c) =>
@@ -64,7 +67,7 @@ object AWSDataGenerator extends App {
 
 }
 
-case class Config(service: String = "", bucketName: String = "", path: String = "", fileFormat: String = "csv", numberOfFiles: Int = 10, partitioning: Boolean = false)
+case class Config(service: String = "", bucketName: String = "", path: String = "", fileFormat: String = "csv", numberOfFiles: Int = 10, partitioning: Boolean = false, inputFile: String = "")
 
 class S3Actor extends Actor {
 
@@ -76,8 +79,22 @@ class S3Actor extends Actor {
       (0 until config.numberOfFiles).foreach(i => {
         val usersStr = if (config.fileFormat == "json") {
           (0 until 100).map(_ => SampleUserData.random().toJSON).mkString("\n")
-        } else {
+        } else if (config.fileFormat == "csv") {
           (0 until 100).map(_ => SampleUserData.random().toCSV).mkString("\n")
+        } else {
+          val alpha = fabricator.Alphanumeric()
+          val calendar = fabricator.Calendar()
+          val contact = fabricator.Contact()
+          val finance = fabricator.Finance()
+          val internet = fabricator.Internet()
+          val userAgent = fabricator.UserAgent()
+          val location = fabricator.Location()
+          val mobile = fabricator.Mobile()
+          val words = fabricator.Words()
+          val bindings = Map("alpha" -> alpha, "calendar" -> calendar, "contact" -> contact, "finance" -> finance,
+            "internet" -> internet, "userAgent" -> userAgent, "location" -> location, "mobile" -> mobile, "words" -> words)
+          val engine = new TemplateEngine
+          (0 until 100).map(_ => engine.layout(config.inputFile, bindings).replaceAll("\n","")).mkString("\n")
         }
         val contentLength = IOUtils.toByteArray(strToInputStream(usersStr)).length
         val metadata = new ObjectMetadata()

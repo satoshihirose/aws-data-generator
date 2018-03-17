@@ -22,3 +22,9 @@ val awsSdkVersion = "1.11.283"
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % awsSdkVersion
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-core" % awsSdkVersion
 
+libraryDependencies += "org.scalatra.scalate" %% "scalate-core" % "1.8.0"
+
+libraryDependencies += "com.github.azakordonets" % "fabricator_2.12" % "2.1.5"
+
+libraryDependencies += "ch.qos.logback" % "logback-core" % "1.2.3"
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
