@@ -118,9 +118,11 @@ class S3Actor extends Actor {
             println(s"successfully put object to s3://${config.bucketName}/$keyName")
           }
         } catch {
-          case e: AmazonServiceException => {
+          case e: AmazonServiceException =>
             println(e.getErrorMessage)
-          }
+          case e: Exception =>
+            println(e.getStackTrace)
+            e.printStackTrace()
         }
       })
     }
