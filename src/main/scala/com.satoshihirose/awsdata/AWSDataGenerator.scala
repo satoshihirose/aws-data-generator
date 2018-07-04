@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 import java.util.{Date, TimeZone}
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
@@ -37,7 +37,7 @@ object AWSDataGenerator extends App {
         opt[Int]("number-of-files").abbr("n").action( (x, c) =>
           c.copy(numberOfFiles = x) ).text("number of files"),
         opt[Unit]("partitioning").abbr("p").action( (x, c) =>
-        c.copy(partitioning = true) ).text("number of partitions"),
+        c.copy(partitioning = true) ).text("enable partitioning"),
       )
     cmd("kinesis").action( (_, c) => c.copy(service = "kinesis") ).
       text("put data to Kinesis").children(
@@ -69,7 +69,7 @@ object AWSDataGenerator extends App {
 
 case class Config(service: String = "", bucketName: String = "", path: String = "", fileFormat: String = "csv", numberOfFiles: Int = 10, partitioning: Boolean = false, inputFile: String = "")
 
-class S3Actor extends Actor {
+class S3Actor extends Actor with ActorLogging {
 
   def receive = {
     case config: Config if config.service == "s3" => {
@@ -82,6 +82,7 @@ class S3Actor extends Actor {
         } else if (config.fileFormat == "csv") {
           (0 until 100).map(_ => SampleUserData.random().toCSV).mkString("\n")
         } else {
+          try {
           val alpha = fabricator.Alphanumeric()
           val calendar = fabricator.Calendar()
           val contact = fabricator.Contact()
@@ -94,8 +95,16 @@ class S3Actor extends Actor {
           val bindings = Map("alpha" -> alpha, "calendar" -> calendar, "contact" -> contact, "finance" -> finance,
             "internet" -> internet, "userAgent" -> userAgent, "location" -> location, "mobile" -> mobile, "words" -> words)
           val engine = new TemplateEngine
-          (0 until 100).map(_ => engine.layout(config.inputFile, bindings).replaceAll("\n","")).mkString("\n")
+          (0 until 100).map(_ => engine.layout(config.inputFile, bindings).replaceAll("\n", "")).mkString("\n")
+          }  catch {
+              case e: Exception =>
+                log.error(e.getMessage)
+                e.printStackTrace()
+                log.info("error")
+                ""
+          }
         }
+
         val contentLength = IOUtils.toByteArray(strToInputStream(usersStr)).length
         val metadata = new ObjectMetadata()
         metadata.setContentLength(contentLength)
@@ -111,17 +120,17 @@ class S3Actor extends Actor {
             val day =  objectName.substring(6, 8)
             val keyName = s"${config.path}/year=$year/month=$month/day=$day/$objectName"
             s3.putObject(new PutObjectRequest(config.bucketName, keyName, strToInputStream(usersStr), metadata))
-            println(s"successfully put object to s3://${config.bucketName}/$keyName")
+            log.info(s"successfully put object to s3://${config.bucketName}/$keyName")
           } else {
             val keyName = config.path + "/" + objectName
             s3.putObject(new PutObjectRequest(config.bucketName, keyName, strToInputStream(usersStr), metadata))
-            println(s"successfully put object to s3://${config.bucketName}/$keyName")
+            log.info(s"successfully put object to s3://${config.bucketName}/$keyName")
           }
         } catch {
           case e: AmazonServiceException =>
-            println(e.getErrorMessage)
+            log.error(e.getErrorMessage)
           case e: Exception =>
-            println(e.getStackTrace)
+            log.error(e.getMessage)
             e.printStackTrace()
         }
       })

@@ -28,3 +28,6 @@ libraryDependencies += "com.github.azakordonets" % "fabricator_2.12" % "2.1.5"
 
 libraryDependencies += "ch.qos.logback" % "logback-core" % "1.2.3"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
+
+unmanagedResourceDirectories in Compile += { baseDirectory.value / "src" / "main" / "resources" / "data_files" }
+
